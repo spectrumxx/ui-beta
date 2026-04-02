@@ -1,16 +1,17 @@
 --[[
     ╔══════════════════════════════════════════════════════════════════════════╗
-    ║                         SpectrumX UI Library v2.0                        ║
+    ║                         SpectrumX UI Library v2.1                        ║
     ║                    Professional UI Library for Roblox                    ║
     ╚══════════════════════════════════════════════════════════════════════════╝
     
-    Melhorias na v2.0:
-    - Sistema de sombras profissional corrigido
-    - Notificações sem bugs de sobreposição
-    - Labels com quebra de linha automática
-    - Suporte completo a Asset IDs para ícones
-    - Código modular e organizado
-    - 100% compatível com versões anteriores
+    Melhorias na v2.1:
+    - Notificações com barra de progresso corrigida (sem borda estranha)
+    - Elementos mais compactos nas abas
+    - Scroll mais suave e responsivo (PC e Mobile)
+    - Suporte a ícones Lucide
+    - Slider com input numérico clicável
+    - Novo componente LabelToggle com label inferior
+    - Ícone de dropdown customizável via Asset ID
     
     Uso:
         local SpectrumX = loadstring(readfile("path/to/SpectrumX.lua"))()
@@ -26,6 +27,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -73,6 +75,106 @@ SpectrumX.Config = {
     CornerRadius = 8,
     ShadowEnabled = true,
     ShadowIntensity = 0.7,
+}
+
+-- ─── ÍCONES LUCIDE (MAPEAMENTO) ───────────────────────────────────────────────
+-- Mapeamento de nomes de ícones Lucide para códigos Unicode/SVG simplificados
+SpectrumX.LucideIcons = {
+    -- Navegação
+    ["home"] = "🏠",
+    ["settings"] = "⚙️",
+    ["user"] = "👤",
+    ["users"] = "👥",
+    ["menu"] = "☰",
+    ["more-horizontal"] = "⋯",
+    ["more-vertical"] = "⋮",
+    ["chevron-left"] = "‹",
+    ["chevron-right"] = "›",
+    ["chevron-up"] = "▲",
+    ["chevron-down"] = "▼",
+    ["arrow-left"] = "←",
+    ["arrow-right"] = "→",
+    ["arrow-up"] = "↑",
+    ["arrow-down"] = "↓",
+    
+    -- Ações
+    ["plus"] = "+",
+    ["minus"] = "−",
+    ["x"] = "✕",
+    ["check"] = "✓",
+    ["search"] = "🔍",
+    ["trash"] = "🗑️",
+    ["edit"] = "✏️",
+    ["copy"] = "📋",
+    ["download"] = "⬇️",
+    ["upload"] = "⬆️",
+    ["refresh"] = "↻",
+    ["rotate-cw"] = "↻",
+    ["rotate-ccw"] = "↺",
+    ["play"] = "▶️",
+    ["pause"] = "⏸️",
+    ["stop"] = "⏹️",
+    ["skip-forward"] = "⏭️",
+    ["skip-back"] = "⏮️",
+    
+    -- Estado
+    ["eye"] = "👁️",
+    ["eye-off"] = "🚫",
+    ["lock"] = "🔒",
+    ["unlock"] = "🔓",
+    ["shield"] = "🛡️",
+    ["shield-check"] = "✓",
+    ["alert"] = "⚠️",
+    ["alert-circle"] = "⚠️",
+    ["alert-triangle"] = "⚠️",
+    ["info"] = "ℹ️",
+    ["help"] = "❓",
+    ["check-circle"] = "✓",
+    ["x-circle"] = "✕",
+    
+    -- Comunicação
+    ["message"] = "💬",
+    ["mail"] = "✉️",
+    ["bell"] = "🔔",
+    ["bell-off"] = "🔕",
+    ["phone"] = "📞",
+    
+    -- Arquivos
+    ["file"] = "📄",
+    ["folder"] = "📁",
+    ["image"] = "🖼️",
+    ["video"] = "🎬",
+    ["music"] = "🎵",
+    
+    -- Outros
+    ["star"] = "⭐",
+    ["heart"] = "❤️",
+    ["zap"] = "⚡",
+    ["flame"] = "🔥",
+    ["moon"] = "🌙",
+    ["sun"] = "☀️",
+    ["cloud"] = "☁️",
+    ["wifi"] = "📶",
+    ["battery"] = "🔋",
+    ["cpu"] = "💻",
+    ["code"] = "</>",
+    ["terminal"] = "⌨️",
+    ["gamepad"] = "🎮",
+    ["target"] = "🎯",
+    ["crosshair"] = "⌖",
+    ["map"] = "🗺️",
+    ["compass"] = "🧭",
+    ["clock"] = "🕐",
+    ["calendar"] = "📅",
+    ["save"] = "💾",
+    ["share"] = "🔗",
+    ["link"] = "🔗",
+    ["external-link"] = "↗️",
+    ["filter"] = "🔽",
+    ["sliders"] = "⚙️",
+    ["toggle-left"] = "◀️",
+    ["toggle-right"] = "▶️",
+    ["power"] = "⏻️",
 }
 
 -- ─── ESCALA RESPONSIVA ────────────────────────────────────────────────────────
@@ -307,6 +409,18 @@ function SpectrumX:FormatAssetId(value)
     return nil
 end
 
+-- NOVO: Verificar se é ícone Lucide
+function SpectrumX:IsLucideIcon(value)
+    if type(value) ~= "string" then return false end
+    return self.LucideIcons[value:lower()] ~= nil
+end
+
+-- NOVO: Obter ícone Lucide
+function SpectrumX:GetLucideIcon(name)
+    if type(name) ~= "string" then return nil end
+    return self.LucideIcons[name:lower()]
+end
+
 function SpectrumX:CreateIcon(parent, iconData, size, color)
     size = size or UDim2.new(0, 20, 0, 20)
     color = color or self.Theme.Text
@@ -326,6 +440,20 @@ function SpectrumX:CreateIcon(parent, iconData, size, color)
         aspect.Parent = img
         
         return img, "image"
+    -- NOVO: Verifica se é ícone Lucide
+    elseif self:IsLucideIcon(iconData) then
+        local lucideIcon = self:GetLucideIcon(iconData)
+        local lbl = Instance.new("TextLabel")
+        lbl.Name = "Icon"
+        lbl.BackgroundTransparency = 1
+        lbl.Size = size
+        lbl.Font = Enum.Font.GothamBold
+        lbl.Text = lucideIcon
+        lbl.TextColor3 = color
+        lbl.TextSize = size.Y.Offset or 16
+        lbl.Parent = parent
+        
+        return lbl, "lucide"
     else
         -- É texto/emoji
         local lbl = Instance.new("TextLabel")
@@ -448,6 +576,8 @@ function SpectrumX:CreateWindow(config)
     -- Ícone do header
     local iconX = self:S(16)
     local hasIconAsset = config.IconAssetId and self:IsAssetId(config.IconAssetId)
+    -- NOVO: Suporte a ícone Lucide no header
+    local hasLucideIcon = config.Icon and self:IsLucideIcon(config.Icon)
     
     if hasIconAsset then
         local assetId = self:FormatAssetId(config.IconAssetId)
@@ -460,6 +590,27 @@ function SpectrumX:CreateWindow(config)
         iconImg.ScaleType = Enum.ScaleType.Stretch  -- Cobre todo o espaço
         iconImg.ZIndex = 14
         iconImg.Parent = self.Header
+    elseif hasLucideIcon then
+        -- NOVO: Ícone Lucide no header
+        local iconBg = Instance.new("Frame")
+        iconBg.Name = "IconBg"
+        iconBg.BackgroundColor3 = self.Theme.Accent
+        iconBg.Position = UDim2.new(0, iconX, 0.5, -self:S(15))
+        iconBg.Size = UDim2.new(0, self:S(30), 0, self:S(30))
+        iconBg.ZIndex = 14
+        iconBg.Parent = self.Header
+        self:CreateCorner(iconBg, UDim.new(0, 6))
+        
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Name = "IconLabel"
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Size = UDim2.new(1, 0, 1, 0)
+        iconLabel.Font = Enum.Font.GothamBlack
+        iconLabel.Text = self:GetLucideIcon(config.Icon)
+        iconLabel.TextColor3 = Color3.new(1, 1, 1)
+        iconLabel.TextSize = self:S(16)
+        iconLabel.ZIndex = 15
+        iconLabel.Parent = iconBg
     else
         -- Ícone padrão (letra)
         local iconBg = Instance.new("Frame")
@@ -568,7 +719,7 @@ function SpectrumX:CreateWindow(config)
     sidebarLine.ZIndex = 12
     sidebarLine.Parent = sidebarWrap
     
-    -- ScrollingFrame da sidebar
+    -- ScrollingFrame da sidebar - CORREÇÃO: Scroll mais suave
     self.Sidebar = Instance.new("ScrollingFrame")
     self.Sidebar.Name = "Sidebar"
     self.Sidebar.BackgroundTransparency = 1
@@ -580,6 +731,9 @@ function SpectrumX:CreateWindow(config)
     self.Sidebar.ScrollBarImageTransparency = 0.6
     self.Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
     self.Sidebar.ScrollingDirection = Enum.ScrollingDirection.Y
+    -- CORREÇÃO: Scroll mais pesado e responsivo
+    self.Sidebar.ScrollingEnabled = true
+    self.Sidebar.VerticalScrollBarInset = Enum.ScrollBarInset.None
     self.Sidebar.ZIndex = 11
     self.Sidebar.Parent = sidebarWrap
     
@@ -658,6 +812,9 @@ function SpectrumX:_CreateFloatingButton(config)
     local floatIconAsset = config.FloatIconAssetId or config.FloatIcon or config.IconAssetId or config.Icon or "S"
     local hasFloatIconAsset = config.FloatIconAssetId and self:IsAssetId(config.FloatIconAssetId)
     local hasIconAssetForFloat = config.FloatIcon and self:IsAssetId(config.FloatIcon)
+    -- NOVO: Suporte Lucide no botão flutuante
+    local hasLucideFloat = config.FloatIcon and self:IsLucideIcon(config.FloatIcon)
+    local hasLucideIcon = config.Icon and self:IsLucideIcon(config.Icon)
     
     if hasFloatIconAsset then
         -- Asset ID específico do botão flutuante
@@ -683,6 +840,30 @@ function SpectrumX:_CreateFloatingButton(config)
         iconImg.ScaleType = Enum.ScaleType.Stretch
         iconImg.ZIndex = 102
         iconImg.Parent = self.FloatBtn
+    elseif hasLucideFloat then
+        -- NOVO: Lucide no botão flutuante
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Name = "Icon"
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Size = UDim2.new(1, 0, 1, 0)
+        iconLabel.Font = Enum.Font.GothamBlack
+        iconLabel.Text = self:GetLucideIcon(config.FloatIcon)
+        iconLabel.TextColor3 = Color3.new(1, 1, 1)
+        iconLabel.TextSize = self:S(22)
+        iconLabel.ZIndex = 102
+        iconLabel.Parent = self.FloatBtn
+    elseif hasLucideIcon then
+        -- NOVO: Lucide do header
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Name = "Icon"
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Size = UDim2.new(1, 0, 1, 0)
+        iconLabel.Font = Enum.Font.GothamBlack
+        iconLabel.Text = self:GetLucideIcon(config.Icon)
+        iconLabel.TextColor3 = Color3.new(1, 1, 1)
+        iconLabel.TextSize = self:S(22)
+        iconLabel.ZIndex = 102
+        iconLabel.Parent = self.FloatBtn
     else
         -- Texto/emoji
         local iconLabel = Instance.new("TextLabel")
@@ -776,9 +957,11 @@ function SpectrumX:CreateTab(config)
     tabBtn.Parent = self.Sidebar
     self:CreateCorner(tabBtn, UDim.new(0, 10))
     
-    -- Ícone da tab (suporta Asset ID ou texto)
+    -- Ícone da tab (suporta Asset ID, Lucide ou texto)
     local hasIconAsset = config.Icon and self:IsAssetId(config.Icon)
     local hasIconAssetId = config.IconAssetId and self:IsAssetId(config.IconAssetId)
+    -- NOVO: Suporte Lucide na tab
+    local hasLucideIcon = config.Icon and self:IsLucideIcon(config.Icon)
     
     if hasIconAsset or hasIconAssetId then
         local assetId = hasIconAsset and self:FormatAssetId(config.Icon) or self:FormatAssetId(config.IconAssetId)
@@ -792,6 +975,18 @@ function SpectrumX:CreateTab(config)
         iconImg.ScaleType = Enum.ScaleType.Stretch
         iconImg.ZIndex = 14
         iconImg.Parent = tabBtn
+    elseif hasLucideIcon then
+        -- NOVO: Lucide na tab
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Name = "Icon"
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Size = UDim2.new(1, 0, 1, 0)
+        iconLabel.Font = Enum.Font.GothamBold
+        iconLabel.Text = self:GetLucideIcon(config.Icon)
+        iconLabel.TextColor3 = self.Theme.TextMuted
+        iconLabel.TextSize = self:S(18)
+        iconLabel.ZIndex = 14
+        iconLabel.Parent = tabBtn
     else
         local iconLabel = Instance.new("TextLabel")
         iconLabel.Name = "Icon"
@@ -857,7 +1052,7 @@ function SpectrumX:CreateTab(config)
     divider.ZIndex = 11
     divider.Parent = page
     
-    -- Função helper para criar lado
+    -- Função helper para criar lado - CORREÇÃO: Scroll mais suave
     local function createSide(position, size, name)
         local scrollFrame = Instance.new("ScrollingFrame")
         scrollFrame.Name = name
@@ -865,20 +1060,29 @@ function SpectrumX:CreateTab(config)
         scrollFrame.BorderSizePixel = 0
         scrollFrame.Position = position
         scrollFrame.Size = size
-        scrollFrame.ScrollBarThickness = 3
+        -- CORREÇÃO: Scroll mais fino e sem efeito escuro
+        scrollFrame.ScrollBarThickness = 2
         scrollFrame.ScrollBarImageColor3 = self.Theme.Accent
-        scrollFrame.ScrollBarImageTransparency = 0.5
+        scrollFrame.ScrollBarImageTransparency = 0.6
+        -- CORREÇÃO: Remover efeito de scroll escuro
+        scrollFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
         scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        -- CORREÇÃO: Scroll apenas vertical para evitar balanço lateral
+        scrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
         scrollFrame.ZIndex = 11
         scrollFrame.Parent = page
         
         local layout = Instance.new("UIListLayout")
         layout.SortOrder = Enum.SortOrder.LayoutOrder
-        layout.Padding = UDim.new(0, self:S(8))
+        -- CORREÇÃO: Padding menor para elementos mais compactos
+        layout.Padding = UDim.new(0, self:S(6))
         layout.Parent = scrollFrame
         
         local padding = Instance.new("UIPadding")
         padding.PaddingBottom = UDim.new(0, self:S(10))
+        -- CORREÇÃO: Padding lateral menor
+        padding.PaddingLeft = UDim.new(0, self:S(4))
+        padding.PaddingRight = UDim.new(0, self:S(4))
         padding.Parent = scrollFrame
         
         layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -951,10 +1155,11 @@ end
 
 -- ─── CREATE SECTION ───────────────────────────────────────────────────────────
 function SpectrumX:CreateSection(parent, text, color)
+    -- CORREÇÃO: Altura menor para seção
     local wrap = Instance.new("Frame")
     wrap.Name = "Section_" .. text
     wrap.BackgroundTransparency = 1
-    wrap.Size = UDim2.new(1, 0, 0, self:S(26))
+    wrap.Size = UDim2.new(1, 0, 0, self:S(22))
     wrap.ZIndex = 12
     wrap.Parent = parent
     
@@ -979,7 +1184,7 @@ function SpectrumX:CreateSection(parent, text, color)
     label.Font = Enum.Font.GothamBold
     label.Text = "  " .. text .. "  "
     label.TextColor3 = color or self.Theme.Accent
-    label.TextSize = self:S(11)
+    label.TextSize = self:S(10)
     label.ZIndex = 13
     label.Parent = wrap
     
@@ -995,7 +1200,8 @@ function SpectrumX:CreateToggle(parent, config)
     local default = config.Default or false
     local callback = config.Callback or function() end
     
-    local height = self:S(46)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(42)
     
     local frame = Instance.new("Frame")
     frame.Name = "Toggle_" .. text
@@ -1021,24 +1227,24 @@ function SpectrumX:CreateToggle(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(14), 0, 0)
+    label.Position = UDim2.new(0, self:S(12), 0, 0)
     label.Size = UDim2.new(0.6, 0, 1, 0)
     label.Font = Enum.Font.GothamSemibold
     label.Text = text
     label.TextColor3 = self.Theme.Text
-    label.TextSize = self:S(13)
+    label.TextSize = self:S(12)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextTruncate = Enum.TextTruncate.AtEnd
     label.ZIndex = 13
     label.Parent = frame
     
-    -- Track do toggle
-    local trackWidth, trackHeight = self:S(46), self:S(24)
+    -- Track do toggle - CORREÇÃO: Tamanho menor
+    local trackWidth, trackHeight = self:S(42), self:S(22)
     local track = Instance.new("TextButton")
     track.Name = "Track"
     track.AutoButtonColor = false
     track.BackgroundColor3 = default and self.Theme.ToggleOn or self.Theme.ToggleOff
-    track.Position = UDim2.new(1, -trackWidth - self:S(14), 0.5, -trackHeight/2)
+    track.Position = UDim2.new(1, -trackWidth - self:S(12), 0.5, -trackHeight/2)
     track.Size = UDim2.new(0, trackWidth, 0, trackHeight)
     track.Text = ""
     track.ZIndex = 14
@@ -1048,8 +1254,8 @@ function SpectrumX:CreateToggle(parent, config)
     
     local trackStroke = track:FindFirstChildOfClass("UIStroke")
     
-    -- Knob
-    local knobSize = self:S(18)
+    -- Knob - CORREÇÃO: Tamanho menor
+    local knobSize = self:S(16)
     local knob = Instance.new("Frame")
     knob.Name = "Knob"
     knob.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -1115,7 +1321,8 @@ function SpectrumX:CreateButton(parent, config)
     local style = config.Style or "default"
     local callback = config.Callback or function() end
     
-    local height = self:S(40)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(36)
     
     local frame = Instance.new("Frame")
     frame.Name = "Button_" .. text
@@ -1130,7 +1337,7 @@ function SpectrumX:CreateButton(parent, config)
     btn.Size = UDim2.new(1, 0, 1, 0)
     btn.Font = Enum.Font.GothamBold
     btn.Text = text
-    btn.TextSize = self:S(13)
+    btn.TextSize = self:S(12)
     btn.ZIndex = 13
     btn.Parent = frame
     self:CreateCorner(btn)
@@ -1222,7 +1429,8 @@ function SpectrumX:CreateInput(parent, config)
     local placeholder = config.Placeholder or "Digite aqui..."
     local callback = config.Callback or function() end
     
-    local height = self:S(62)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(56)
     
     local frame = Instance.new("Frame")
     frame.Name = "Input_" .. labelText
@@ -1238,12 +1446,12 @@ function SpectrumX:CreateInput(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(14), 0, self:S(10))
-    label.Size = UDim2.new(1, -self:S(28), 0, self:S(16))
+    label.Position = UDim2.new(0, self:S(12), 0, self:S(8))
+    label.Size = UDim2.new(1, -self:S(24), 0, self:S(14))
     label.Font = Enum.Font.GothamSemibold
     label.Text = labelText
     label.TextColor3 = self.Theme.TextMuted
-    label.TextSize = self:S(10)
+    label.TextSize = self:S(9)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
     label.Parent = frame
@@ -1252,18 +1460,18 @@ function SpectrumX:CreateInput(parent, config)
     local textBox = Instance.new("TextBox")
     textBox.Name = "TextBox"
     textBox.BackgroundColor3 = self.Theme.Input
-    textBox.Position = UDim2.new(0, self:S(12), 0, self:S(28))
-    textBox.Size = UDim2.new(1, -self:S(24), 0, self:S(26))
+    textBox.Position = UDim2.new(0, self:S(10), 0, self:S(24))
+    textBox.Size = UDim2.new(1, -self:S(20), 0, self:S(24))
     textBox.Font = Enum.Font.Gotham
     textBox.Text = tostring(default)
     textBox.PlaceholderText = placeholder
     textBox.PlaceholderColor3 = self.Theme.TextMuted
     textBox.TextColor3 = self.Theme.Text
-    textBox.TextSize = self:S(13)
+    textBox.TextSize = self:S(12)
     textBox.ClearTextOnFocus = false
     textBox.ZIndex = 14
     textBox.Parent = frame
-    self:CreateCorner(textBox, UDim.new(0, 6))
+    self:CreateCorner(textBox, UDim.new(0, 5))
     
     -- Foco
     textBox.Focused:Connect(function()
@@ -1294,7 +1502,8 @@ function SpectrumX:CreateNumberInput(parent, config)
     local max = config.Max or math.huge
     local callback = config.Callback or function() end
     
-    local height = self:S(62)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(56)
     
     local frame = Instance.new("Frame")
     frame.Name = "NumberInput_" .. labelText
@@ -1310,12 +1519,12 @@ function SpectrumX:CreateNumberInput(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(14), 0, self:S(10))
-    label.Size = UDim2.new(1, -self:S(28), 0, self:S(16))
+    label.Position = UDim2.new(0, self:S(12), 0, self:S(8))
+    label.Size = UDim2.new(1, -self:S(24), 0, self:S(14))
     label.Font = Enum.Font.GothamSemibold
     label.Text = labelText
     label.TextColor3 = self.Theme.TextMuted
-    label.TextSize = self:S(10)
+    label.TextSize = self:S(9)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
     label.Parent = frame
@@ -1324,16 +1533,16 @@ function SpectrumX:CreateNumberInput(parent, config)
     local textBox = Instance.new("TextBox")
     textBox.Name = "TextBox"
     textBox.BackgroundColor3 = self.Theme.Input
-    textBox.Position = UDim2.new(0, self:S(12), 0, self:S(28))
-    textBox.Size = UDim2.new(1, -self:S(24), 0, self:S(26))
+    textBox.Position = UDim2.new(0, self:S(10), 0, self:S(24))
+    textBox.Size = UDim2.new(1, -self:S(20), 0, self:S(24))
     textBox.Font = Enum.Font.GothamBold
     textBox.Text = tostring(default)
     textBox.TextColor3 = self.Theme.Text
-    textBox.TextSize = self:S(13)
+    textBox.TextSize = self:S(12)
     textBox.ClearTextOnFocus = false
     textBox.ZIndex = 14
     textBox.Parent = frame
-    self:CreateCorner(textBox, UDim.new(0, 6))
+    self:CreateCorner(textBox, UDim.new(0, 5))
     
     -- Foco
     textBox.Focused:Connect(function()
@@ -1369,6 +1578,7 @@ end
 
 
 -- ─── CREATE SLIDER ────────────────────────────────────────────────────────────
+-- CORREÇÃO: Agora com valor clicável que funciona como input numérico
 function SpectrumX:CreateSlider(parent, config)
     config = config or {}
     local text = config.Text or "Slider"
@@ -1376,8 +1586,10 @@ function SpectrumX:CreateSlider(parent, config)
     local max = config.Max or 100
     local default = config.Default or min
     local callback = config.Callback or function() end
+    local decimals = config.Decimals or 0  -- NOVO: Número de casas decimais
     
-    local height = self:S(62)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(56)
     
     local frame = Instance.new("Frame")
     frame.Name = "Slider_" .. text
@@ -1392,44 +1604,68 @@ function SpectrumX:CreateSlider(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(14), 0, self:S(10))
-    label.Size = UDim2.new(0.6, 0, 0, self:S(18))
+    label.Position = UDim2.new(0, self:S(12), 0, self:S(8))
+    label.Size = UDim2.new(0.5, 0, 0, self:S(16))
     label.Font = Enum.Font.GothamSemibold
     label.Text = text
     label.TextColor3 = self.Theme.Text
-    label.TextSize = self:S(12)
+    label.TextSize = self:S(11)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
     label.Parent = frame
     
-    -- Valor display
-    local valueBg = Instance.new("Frame")
+    -- NOVO: Valor display clicável (funciona como input)
+    local valueBg = Instance.new("TextButton")
     valueBg.Name = "ValueBg"
     valueBg.BackgroundColor3 = self.Theme.Accent
-    valueBg.Position = UDim2.new(1, -self:S(42), 0, self:S(8))
-    valueBg.Size = UDim2.new(0, self:S(36), 0, self:S(22))
+    valueBg.Position = UDim2.new(1, -self:S(50), 0, self:S(6))
+    valueBg.Size = UDim2.new(0, self:S(44), 0, self:S(20))
+    valueBg.AutoButtonColor = false
+    valueBg.Text = ""
     valueBg.ZIndex = 14
     valueBg.Parent = frame
     self:CreateCorner(valueBg, UDim.new(0, 5))
     
+    -- Label do valor (mostra o número)
     local valueLabel = Instance.new("TextLabel")
-    valueLabel.Name = "Value"
+    valueLabel.Name = "ValueLabel"
     valueLabel.BackgroundTransparency = 1
     valueLabel.Size = UDim2.new(1, 0, 1, 0)
     valueLabel.Font = Enum.Font.GothamBold
-    valueLabel.Text = tostring(default)
+    -- Formatar com casas decimais
+    local formatStr = "%0." .. decimals .. "f"
+    valueLabel.Text = string.format(formatStr, default)
     valueLabel.TextColor3 = Color3.new(1, 1, 1)
-    valueLabel.TextSize = self:S(11)
+    valueLabel.TextSize = self:S(10)
     valueLabel.ZIndex = 15
     valueLabel.Parent = valueBg
     
+    -- NOVO: TextBox invisível para input (aparece ao clicar)
+    local valueInput = Instance.new("TextBox")
+    valueInput.Name = "ValueInput"
+    valueInput.BackgroundColor3 = self.Theme.Input
+    valueInput.Position = UDim2.new(1, -self:S(54), 0, self:S(4))
+    valueInput.Size = UDim2.new(0, self:S(52), 0, self:S(24))
+    valueInput.Font = Enum.Font.GothamBold
+    valueInput.Text = string.format(formatStr, default)
+    valueInput.TextColor3 = self.Theme.Text
+    valueInput.TextSize = self:S(10)
+    valueInput.ClearTextOnFocus = true
+    valueInput.Visible = false
+    valueInput.ZIndex = 16
+    valueInput.Parent = frame
+    self:CreateCorner(valueInput, UDim.new(0, 5))
+    
+    -- Stroke para o input
+    local inputStroke = self:CreateStroke(valueInput, self.Theme.Accent, 1.5, 0)
+    
     -- Track background
-    local trackHeight = self:S(6)
+    local trackHeight = self:S(5)
     local trackBg = Instance.new("Frame")
     trackBg.Name = "TrackBg"
     trackBg.BackgroundColor3 = self.Theme.Input
-    trackBg.Position = UDim2.new(0, self:S(14), 1, -self:S(20))
-    trackBg.Size = UDim2.new(1, -self:S(28), 0, trackHeight)
+    trackBg.Position = UDim2.new(0, self:S(12), 1, -self:S(18))
+    trackBg.Size = UDim2.new(1, -self:S(24), 0, trackHeight)
     trackBg.ZIndex = 13
     trackBg.Parent = frame
     self:CreateCorner(trackBg, UDim.new(1, 0))
@@ -1444,8 +1680,8 @@ function SpectrumX:CreateSlider(parent, config)
     self:CreateCorner(fill, UDim.new(1, 0))
     self:CreateGradient(fill, self.Theme.Accent, self.Theme.AccentDark, 0)
     
-    -- Knob
-    local knobSize = self:S(16)
+    -- Knob - CORREÇÃO: Tamanho menor
+    local knobSize = self:S(14)
     local knob = Instance.new("Frame")
     knob.Name = "Knob"
     knob.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -1459,19 +1695,84 @@ function SpectrumX:CreateSlider(parent, config)
     local dragging = false
     local currentValue = default
     
+    -- NOVO: Função para formatar valor
+    local function formatValue(val)
+        if decimals == 0 then
+            return tostring(math.floor(val))
+        else
+            return string.format(formatStr, val)
+        end
+    end
+    
     local function update(input)
         local percent = math.clamp(
             (input.Position.X - trackBg.AbsolutePosition.X) / trackBg.AbsoluteSize.X,
             0, 1
         )
-        local value = math.floor((min + (max - min) * percent) * 100) / 100
+        local value = min + (max - min) * percent
+        -- Arredondar para casas decimais especificadas
+        if decimals > 0 then
+            value = math.floor(value * (10^decimals)) / (10^decimals)
+        else
+            value = math.floor(value)
+        end
         currentValue = value
         
         fill.Size = UDim2.new(percent, 0, 1, 0)
         knob.Position = UDim2.new(percent, -knobSize/2, 0.5, -knobSize/2)
-        valueLabel.Text = tostring(value)
+        local formatted = formatValue(value)
+        valueLabel.Text = formatted
+        valueInput.Text = formatted
         callback(value)
     end
+    
+    -- NOVO: Clique no valor para editar
+    valueBg.MouseButton1Click:Connect(function()
+        valueLabel.Visible = false
+        valueBg.Visible = false
+        valueInput.Visible = true
+        valueInput:CaptureFocus()
+    end)
+    
+    -- NOVO: Ao perder foco do input
+    valueInput.FocusLost:Connect(function()
+        local inputValue = tonumber(valueInput.Text)
+        if inputValue then
+            inputValue = math.clamp(inputValue, min, max)
+            -- Arredondar
+            if decimals > 0 then
+                inputValue = math.floor(inputValue * (10^decimals)) / (10^decimals)
+            else
+                inputValue = math.floor(inputValue)
+            end
+            currentValue = inputValue
+            
+            local percent = (inputValue - min) / (max - min)
+            fill.Size = UDim2.new(percent, 0, 1, 0)
+            knob.Position = UDim2.new(percent, -knobSize/2, 0.5, -knobSize/2)
+            
+            local formatted = formatValue(inputValue)
+            valueLabel.Text = formatted
+            valueInput.Text = formatted
+            callback(inputValue)
+        else
+            -- Restaurar valor anterior se inválido
+            valueInput.Text = formatValue(currentValue)
+        end
+        
+        valueInput.Visible = false
+        valueLabel.Visible = true
+        valueBg.Visible = true
+    end)
+    
+    -- Hover no valor
+    valueBg.MouseEnter:Connect(function()
+        self:Tween(valueBg, {BackgroundColor3 = self.Theme.AccentHover}, 0.15)
+    end)
+    
+    valueBg.MouseLeave:Connect(function()
+        self:Tween(valueBg, {BackgroundColor3 = self.Theme.Accent}, 0.15)
+    end)
     
     trackBg.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or
@@ -1507,11 +1808,19 @@ function SpectrumX:CreateSlider(parent, config)
         GetValue = function() return currentValue end,
         SetValue = function(v)
             v = math.clamp(v, min, max)
+            -- Arredondar
+            if decimals > 0 then
+                v = math.floor(v * (10^decimals)) / (10^decimals)
+            else
+                v = math.floor(v)
+            end
             currentValue = v
             local percent = (v - min) / (max - min)
             fill.Size = UDim2.new(percent, 0, 1, 0)
             knob.Position = UDim2.new(percent, -knobSize/2, 0.5, -knobSize/2)
-            valueLabel.Text = tostring(v)
+            local formatted = formatValue(v)
+            valueLabel.Text = formatted
+            valueInput.Text = formatted
         end,
     }
 end
@@ -1535,14 +1844,19 @@ local function getDropdownPosition(button, layout, maxHeight)
 end
 
 -- ─── CREATE DROPDOWN ────────────────────────────────────────────────────────────
+-- CORREÇÃO: Ícone de dropdown customizável via Asset ID
 function SpectrumX:CreateDropdown(parent, config)
     config = config or {}
     local labelText = config.Label or "Dropdown"
     local options = config.Options or {}
     local default = config.Default
     local callback = config.Callback or function() end
+    -- NOVO: Asset ID customizável para o ícone de dropdown
+    local arrowIconAssetId = config.ArrowIconAssetId or nil  -- Asset ID para seta
+    local arrowOpenIconAssetId = config.ArrowOpenIconAssetId or arrowIconAssetId  -- Asset ID quando aberto
     
-    local height = self:S(62)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(56)
     
     local frame = Instance.new("Frame")
     frame.Name = "Dropdown_" .. labelText
@@ -1558,12 +1872,12 @@ function SpectrumX:CreateDropdown(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(14), 0, self:S(10))
-    label.Size = UDim2.new(1, -self:S(28), 0, self:S(14))
+    label.Position = UDim2.new(0, self:S(12), 0, self:S(8))
+    label.Size = UDim2.new(1, -self:S(24), 0, self:S(12))
     label.Font = Enum.Font.GothamSemibold
     label.Text = labelText
     label.TextColor3 = self.Theme.TextMuted
-    label.TextSize = self:S(10)
+    label.TextSize = self:S(9)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
     label.Parent = frame
@@ -1573,31 +1887,48 @@ function SpectrumX:CreateDropdown(parent, config)
     dropBtn.Name = "DropBtn"
     dropBtn.BackgroundColor3 = self.Theme.Input
     dropBtn.AutoButtonColor = false
-    dropBtn.Position = UDim2.new(0, self:S(12), 0, self:S(26))
-    dropBtn.Size = UDim2.new(1, -self:S(24), 0, self:S(28))
+    dropBtn.Position = UDim2.new(0, self:S(10), 0, self:S(22))
+    dropBtn.Size = UDim2.new(1, -self:S(20), 0, self:S(26))
     dropBtn.Font = Enum.Font.GothamSemibold
     dropBtn.Text = "  " .. (default or "Selecionar...")
     dropBtn.TextColor3 = default and self.Theme.Text or self.Theme.TextMuted
-    dropBtn.TextSize = self:S(12)
+    dropBtn.TextSize = self:S(11)
     dropBtn.TextXAlignment = Enum.TextXAlignment.Left
     dropBtn.ZIndex = 14
     dropBtn.Parent = frame
-    self:CreateCorner(dropBtn, UDim.new(0, 6))
+    self:CreateCorner(dropBtn, UDim.new(0, 5))
     
     local dropStroke = self:CreateStroke(dropBtn, self.Theme.Border, 1, 0.4)
     
-    -- Seta
-    local arrow = Instance.new("TextLabel")
-    arrow.Name = "Arrow"
-    arrow.BackgroundTransparency = 1
-    arrow.Position = UDim2.new(1, -self:S(28), 0, 0)
-    arrow.Size = UDim2.new(0, self:S(26), 1, 0)
-    arrow.Font = Enum.Font.GothamBold
-    arrow.Text = "▾"
-    arrow.TextColor3 = self.Theme.Accent
-    arrow.TextSize = self:S(14)
-    arrow.ZIndex = 15
-    arrow.Parent = dropBtn
+    -- NOVO: Seta customizável via Asset ID ou texto padrão
+    local arrow
+    if arrowIconAssetId and self:IsAssetId(arrowIconAssetId) then
+        -- Usar Asset ID para ícone
+        local assetId = self:FormatAssetId(arrowIconAssetId)
+        arrow = Instance.new("ImageLabel")
+        arrow.Name = "Arrow"
+        arrow.BackgroundTransparency = 1
+        arrow.Position = UDim2.new(1, -self:S(26), 0, 0)
+        arrow.Size = UDim2.new(0, self:S(22), 1, 0)
+        arrow.Image = assetId
+        arrow.ImageColor3 = self.Theme.Accent
+        arrow.ScaleType = Enum.ScaleType.Fit
+        arrow.ZIndex = 15
+        arrow.Parent = dropBtn
+    else
+        -- Texto padrão (▾)
+        arrow = Instance.new("TextLabel")
+        arrow.Name = "Arrow"
+        arrow.BackgroundTransparency = 1
+        arrow.Position = UDim2.new(1, -self:S(26), 0, 0)
+        arrow.Size = UDim2.new(0, self:S(22), 1, 0)
+        arrow.Font = Enum.Font.GothamBold
+        arrow.Text = "▾"
+        arrow.TextColor3 = self.Theme.Accent
+        arrow.TextSize = self:S(12)
+        arrow.ZIndex = 15
+        arrow.Parent = dropBtn
+    end
     
     -- Lista do dropdown
     local dropList = Instance.new("ScrollingFrame")
@@ -1633,7 +1964,12 @@ function SpectrumX:CreateDropdown(parent, config)
         if not isOpen then return end
         isOpen = false
         self:Tween(dropList, {Size = UDim2.new(0, dropBtn.AbsoluteSize.X, 0, 0)}, 0.2)
-        self:Tween(arrow, {Rotation = 0}, 0.2)
+        -- NOVO: Trocar ícone se Asset ID diferente para estado fechado
+        if arrowOpenIconAssetId and arrowIconAssetId and arrow:IsA("ImageLabel") then
+            arrow.Image = self:FormatAssetId(arrowIconAssetId)
+        else
+            self:Tween(arrow, {Rotation = 0}, 0.2)
+        end
         if dropStroke then
             self:Tween(dropStroke, {Color = self.Theme.Border, Transparency = 0.4}, 0.2)
         end
@@ -1655,7 +1991,7 @@ function SpectrumX:CreateDropdown(parent, config)
             
             local row = Instance.new("Frame")
             row.BackgroundColor3 = isSelected and Color3.fromRGB(40, 10, 10) or self.Theme.Input
-            row.Size = UDim2.new(1, 0, 0, self:S(30))
+            row.Size = UDim2.new(1, 0, 0, self:S(28))
             row.ZIndex = 101
             row.Parent = dropList
             self:CreateCorner(row, UDim.new(0, 5))
@@ -1679,7 +2015,7 @@ function SpectrumX:CreateDropdown(parent, config)
             rowBtn.Font = Enum.Font.GothamSemibold
             rowBtn.Text = (isSelected and "   " or "  ") .. option
             rowBtn.TextColor3 = isSelected and self.Theme.AccentSecondary or self.Theme.TextSecondary
-            rowBtn.TextSize = self:S(12)
+            rowBtn.TextSize = self:S(11)
             rowBtn.TextXAlignment = Enum.TextXAlignment.Left
             rowBtn.ZIndex = 102
             rowBtn.Parent = row
@@ -1738,7 +2074,12 @@ function SpectrumX:CreateDropdown(parent, config)
         
         self:Tween(dropList, {Size = UDim2.new(0, dropBtn.AbsoluteSize.X, 0, targetH)}, 0.25,
             Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        self:Tween(arrow, {Rotation = 180}, 0.2)
+        -- NOVO: Trocar ícone se Asset ID diferente para estado aberto
+        if arrowOpenIconAssetId and arrow:IsA("ImageLabel") then
+            arrow.Image = self:FormatAssetId(arrowOpenIconAssetId)
+        else
+            self:Tween(arrow, {Rotation = 180}, 0.2)
+        end
         if dropStroke then
             self:Tween(dropStroke, {Color = self.Theme.Accent, Transparency = 0.2}, 0.2)
         end
@@ -1762,14 +2103,19 @@ end
 
 
 -- ─── CREATE MULTI DROPDOWN ────────────────────────────────────────────────────
+-- CORREÇÃO: Ícone de dropdown customizável via Asset ID
 function SpectrumX:CreateMultiDropdown(parent, config)
     config = config or {}
     local labelText = config.Label or "Multi Select"
     local options = config.Options or {}
     local default = config.Default or {}
     local callback = config.Callback or function() end
+    -- NOVO: Asset ID customizável para o ícone de dropdown
+    local arrowIconAssetId = config.ArrowIconAssetId or nil
+    local arrowOpenIconAssetId = config.ArrowOpenIconAssetId or arrowIconAssetId
     
-    local height = self:S(62)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(56)
     
     local frame = Instance.new("Frame")
     frame.Name = "MultiDropdown_" .. labelText
@@ -1785,12 +2131,12 @@ function SpectrumX:CreateMultiDropdown(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(14), 0, self:S(10))
-    label.Size = UDim2.new(1, -self:S(28), 0, self:S(14))
+    label.Position = UDim2.new(0, self:S(12), 0, self:S(8))
+    label.Size = UDim2.new(1, -self:S(24), 0, self:S(12))
     label.Font = Enum.Font.GothamSemibold
     label.Text = labelText
     label.TextColor3 = self.Theme.TextMuted
-    label.TextSize = self:S(10)
+    label.TextSize = self:S(9)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 13
     label.Parent = frame
@@ -1800,31 +2146,46 @@ function SpectrumX:CreateMultiDropdown(parent, config)
     dropBtn.Name = "DropBtn"
     dropBtn.BackgroundColor3 = self.Theme.Input
     dropBtn.AutoButtonColor = false
-    dropBtn.Position = UDim2.new(0, self:S(12), 0, self:S(26))
-    dropBtn.Size = UDim2.new(1, -self:S(24), 0, self:S(28))
+    dropBtn.Position = UDim2.new(0, self:S(10), 0, self:S(22))
+    dropBtn.Size = UDim2.new(1, -self:S(20), 0, self:S(26))
     dropBtn.Font = Enum.Font.GothamSemibold
     dropBtn.Text = "  Selecionar..."
     dropBtn.TextColor3 = self.Theme.TextMuted
-    dropBtn.TextSize = self:S(12)
+    dropBtn.TextSize = self:S(11)
     dropBtn.TextXAlignment = Enum.TextXAlignment.Left
     dropBtn.ZIndex = 14
     dropBtn.Parent = frame
-    self:CreateCorner(dropBtn, UDim.new(0, 6))
+    self:CreateCorner(dropBtn, UDim.new(0, 5))
     
     local dropStroke = self:CreateStroke(dropBtn, self.Theme.Border, 1, 0.4)
     
-    -- Seta
-    local arrow = Instance.new("TextLabel")
-    arrow.Name = "Arrow"
-    arrow.BackgroundTransparency = 1
-    arrow.Position = UDim2.new(1, -self:S(28), 0, 0)
-    arrow.Size = UDim2.new(0, self:S(26), 1, 0)
-    arrow.Font = Enum.Font.GothamBold
-    arrow.Text = "▾"
-    arrow.TextColor3 = self.Theme.Accent
-    arrow.TextSize = self:S(14)
-    arrow.ZIndex = 15
-    arrow.Parent = dropBtn
+    -- NOVO: Seta customizável via Asset ID ou texto padrão
+    local arrow
+    if arrowIconAssetId and self:IsAssetId(arrowIconAssetId) then
+        local assetId = self:FormatAssetId(arrowIconAssetId)
+        arrow = Instance.new("ImageLabel")
+        arrow.Name = "Arrow"
+        arrow.BackgroundTransparency = 1
+        arrow.Position = UDim2.new(1, -self:S(26), 0, 0)
+        arrow.Size = UDim2.new(0, self:S(22), 1, 0)
+        arrow.Image = assetId
+        arrow.ImageColor3 = self.Theme.Accent
+        arrow.ScaleType = Enum.ScaleType.Fit
+        arrow.ZIndex = 15
+        arrow.Parent = dropBtn
+    else
+        arrow = Instance.new("TextLabel")
+        arrow.Name = "Arrow"
+        arrow.BackgroundTransparency = 1
+        arrow.Position = UDim2.new(1, -self:S(26), 0, 0)
+        arrow.Size = UDim2.new(0, self:S(22), 1, 0)
+        arrow.Font = Enum.Font.GothamBold
+        arrow.Text = "▾"
+        arrow.TextColor3 = self.Theme.Accent
+        arrow.TextSize = self:S(12)
+        arrow.ZIndex = 15
+        arrow.Parent = dropBtn
+    end
     
     -- Lista
     local dropList = Instance.new("ScrollingFrame")
@@ -1874,7 +2235,12 @@ function SpectrumX:CreateMultiDropdown(parent, config)
         if not isOpen then return end
         isOpen = false
         self:Tween(dropList, {Size = UDim2.new(0, dropBtn.AbsoluteSize.X, 0, 0)}, 0.2)
-        self:Tween(arrow, {Rotation = 0}, 0.2)
+        -- NOVO: Trocar ícone se Asset ID diferente
+        if arrowOpenIconAssetId and arrowIconAssetId and arrow:IsA("ImageLabel") then
+            arrow.Image = self:FormatAssetId(arrowIconAssetId)
+        else
+            self:Tween(arrow, {Rotation = 0}, 0.2)
+        end
         if dropStroke then
             self:Tween(dropStroke, {Color = self.Theme.Border, Transparency = 0.4}, 0.2)
         end
@@ -1914,7 +2280,7 @@ function SpectrumX:CreateMultiDropdown(parent, config)
             
             local row = Instance.new("Frame")
             row.BackgroundColor3 = isSelected and Color3.fromRGB(40, 10, 10) or self.Theme.Input
-            row.Size = UDim2.new(1, 0, 0, self:S(30))
+            row.Size = UDim2.new(1, 0, 0, self:S(28))
             row.ZIndex = 101
             row.Parent = dropList
             self:CreateCorner(row, UDim.new(0, 5))
@@ -1942,7 +2308,7 @@ function SpectrumX:CreateMultiDropdown(parent, config)
             rowBtn.Font = Enum.Font.GothamSemibold
             rowBtn.Text = (isSelected and "      " or "  ") .. option
             rowBtn.TextColor3 = isSelected and self.Theme.AccentSecondary or self.Theme.TextSecondary
-            rowBtn.TextSize = self:S(12)
+            rowBtn.TextSize = self:S(11)
             rowBtn.TextXAlignment = Enum.TextXAlignment.Left
             rowBtn.ZIndex = 102
             rowBtn.Parent = row
@@ -1999,7 +2365,12 @@ function SpectrumX:CreateMultiDropdown(parent, config)
         
         self:Tween(dropList, {Size = UDim2.new(0, dropBtn.AbsoluteSize.X, 0, targetH)}, 0.25,
             Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        self:Tween(arrow, {Rotation = 180}, 0.2)
+        -- NOVO: Trocar ícone se Asset ID diferente
+        if arrowOpenIconAssetId and arrow:IsA("ImageLabel") then
+            arrow.Image = self:FormatAssetId(arrowOpenIconAssetId)
+        else
+            self:Tween(arrow, {Rotation = 180}, 0.2)
+        end
         if dropStroke then
             self:Tween(dropStroke, {Color = self.Theme.Accent, Transparency = 0.2}, 0.2)
         end
@@ -2029,7 +2400,8 @@ function SpectrumX:CreateCheckbox(parent, config)
     local default = config.Default or false
     local callback = config.Callback or function() end
     
-    local height = self:S(42)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(38)
     
     local frame = Instance.new("Frame")
     frame.Name = "Checkbox_" .. text
@@ -2040,21 +2412,21 @@ function SpectrumX:CreateCheckbox(parent, config)
     self:CreateCorner(frame)
     self:CreateStroke(frame, self.Theme.Border, 1, 0.4)
     
-    -- Checkbox
-    local cbSize = self:S(20)
+    -- Checkbox - CORREÇÃO: Tamanho menor
+    local cbSize = self:S(18)
     local checkbox = Instance.new("TextButton")
     checkbox.Name = "Checkbox"
     checkbox.BackgroundColor3 = default and self.Theme.Accent or self.Theme.Input
     checkbox.AutoButtonColor = false
-    checkbox.Position = UDim2.new(0, self:S(14), 0.5, -cbSize/2)
+    checkbox.Position = UDim2.new(0, self:S(12), 0.5, -cbSize/2)
     checkbox.Size = UDim2.new(0, cbSize, 0, cbSize)
     checkbox.Font = Enum.Font.GothamBold
     checkbox.Text = default and "✓" or ""
     checkbox.TextColor3 = Color3.new(1, 1, 1)
-    checkbox.TextSize = self:S(13)
+    checkbox.TextSize = self:S(12)
     checkbox.ZIndex = 14
     checkbox.Parent = frame
-    self:CreateCorner(checkbox, UDim.new(0, 5))
+    self:CreateCorner(checkbox, UDim.new(0, 4))
     self:CreateStroke(checkbox, default and self.Theme.Accent or self.Theme.Border, 1.5, default and 0.2 or 0.4)
     
     local cbStroke = checkbox:FindFirstChildOfClass("UIStroke")
@@ -2063,12 +2435,12 @@ function SpectrumX:CreateCheckbox(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(42), 0, 0)
-    label.Size = UDim2.new(1, -self:S(56), 1, 0)
+    label.Position = UDim2.new(0, self:S(38), 0, 0)
+    label.Size = UDim2.new(1, -self:S(52), 1, 0)
     label.Font = Enum.Font.GothamSemibold
     label.Text = text
     label.TextColor3 = self.Theme.Text
-    label.TextSize = self:S(13)
+    label.TextSize = self:S(12)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextTruncate = Enum.TextTruncate.AtEnd
     label.ZIndex = 13
@@ -2117,8 +2489,8 @@ function SpectrumX:CreateLabel(parent, config)
     local wrapped = config.Wrapped ~= false -- Default true (CORREÇÃO!)
     
     -- Calcular altura baseada no texto
-    local minHeight = self:S(36)
-    local padding = self:S(20)
+    local minHeight = self:S(32)
+    local padding = self:S(16)
     
     local frame = Instance.new("Frame")
     frame.Name = "Label_" .. text:sub(1, 10)
@@ -2133,12 +2505,12 @@ function SpectrumX:CreateLabel(parent, config)
     local label = Instance.new("TextLabel")
     label.Name = "Text"
     label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, self:S(14), 0, 0)
-    label.Size = UDim2.new(1, -self:S(28), 1, 0)
+    label.Position = UDim2.new(0, self:S(12), 0, 0)
+    label.Size = UDim2.new(1, -self:S(24), 1, 0)
     label.Font = Enum.Font.GothamSemibold
     label.Text = text
     label.TextColor3 = color
-    label.TextSize = self:S(12)
+    label.TextSize = self:S(11)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextYAlignment = Enum.TextYAlignment.Center
     
@@ -2186,7 +2558,7 @@ function SpectrumX:CreateSeparator(parent)
     local wrap = Instance.new("Frame")
     wrap.Name = "Separator"
     wrap.BackgroundTransparency = 1
-    wrap.Size = UDim2.new(1, 0, 0, self:S(12))
+    wrap.Size = UDim2.new(1, 0, 0, self:S(10))
     wrap.ZIndex = 12
     wrap.Parent = parent
     
@@ -2209,7 +2581,8 @@ function SpectrumX:CreateStatusCard(parent, config)
     config = config or {}
     local title = config.Title or "Status"
     
-    local height = self:S(110)
+    -- CORREÇÃO: Altura menor
+    local height = self:S(100)
     
     local frame = Instance.new("Frame")
     frame.Name = "StatusCard"
@@ -2250,7 +2623,7 @@ function SpectrumX:CreateStatusCard(parent, config)
     header.Name = "Header"
     header.BackgroundColor3 = self.Theme.Header
     header.BorderSizePixel = 0
-    header.Size = UDim2.new(1, 0, 0, self:S(34))
+    header.Size = UDim2.new(1, 0, 0, self:S(30))
     header.Parent = frame
     self:CreateCorner(header, UDim.new(0, 10))
     
@@ -2264,12 +2637,12 @@ function SpectrumX:CreateStatusCard(parent, config)
     local headerTitle = Instance.new("TextLabel")
     headerTitle.Name = "Title"
     headerTitle.BackgroundTransparency = 1
-    headerTitle.Position = UDim2.new(0, self:S(16), 0, 0)
-    headerTitle.Size = UDim2.new(1, -self:S(16), 1, 0)
+    headerTitle.Position = UDim2.new(0, self:S(14), 0, 0)
+    headerTitle.Size = UDim2.new(1, -self:S(14), 1, 0)
     headerTitle.Font = Enum.Font.GothamBold
     headerTitle.Text = title
     headerTitle.TextColor3 = self.Theme.Text
-    headerTitle.TextSize = self:S(12)
+    headerTitle.TextSize = self:S(11)
     headerTitle.TextXAlignment = Enum.TextXAlignment.Left
     headerTitle.ZIndex = 14
     headerTitle.Parent = header
@@ -2278,8 +2651,8 @@ function SpectrumX:CreateStatusCard(parent, config)
     local content = Instance.new("Frame")
     content.Name = "Content"
     content.BackgroundTransparency = 1
-    content.Position = UDim2.new(0, self:S(14), 0, self:S(38))
-    content.Size = UDim2.new(1, -self:S(28), 1, -self:S(48))
+    content.Position = UDim2.new(0, self:S(12), 0, self:S(34))
+    content.Size = UDim2.new(1, -self:S(24), 1, -self:S(44))
     content.ZIndex = 13
     content.Parent = frame
     
@@ -2287,11 +2660,11 @@ function SpectrumX:CreateStatusCard(parent, config)
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Name = "Status"
     statusLabel.BackgroundTransparency = 1
-    statusLabel.Size = UDim2.new(1, 0, 0, self:S(20))
+    statusLabel.Size = UDim2.new(1, 0, 0, self:S(18))
     statusLabel.Font = Enum.Font.GothamSemibold
     statusLabel.Text = "● Idle"
     statusLabel.TextColor3 = self.Theme.TextMuted
-    statusLabel.TextSize = self:S(12)
+    statusLabel.TextSize = self:S(11)
     statusLabel.TextXAlignment = Enum.TextXAlignment.Left
     statusLabel.ZIndex = 14
     statusLabel.Parent = content
@@ -2300,12 +2673,12 @@ function SpectrumX:CreateStatusCard(parent, config)
     local infoLabel = Instance.new("TextLabel")
     infoLabel.Name = "Info"
     infoLabel.BackgroundTransparency = 1
-    infoLabel.Position = UDim2.new(0, 0, 0, self:S(22))
-    infoLabel.Size = UDim2.new(1, 0, 0, self:S(16))
+    infoLabel.Position = UDim2.new(0, 0, 0, self:S(20))
+    infoLabel.Size = UDim2.new(1, 0, 0, self:S(14))
     infoLabel.Font = Enum.Font.Gotham
     infoLabel.Text = "Aguardando..."
     infoLabel.TextColor3 = self.Theme.TextMuted
-    infoLabel.TextSize = self:S(10)
+    infoLabel.TextSize = self:S(9)
     infoLabel.TextXAlignment = Enum.TextXAlignment.Left
     infoLabel.ZIndex = 14
     infoLabel.Parent = content
@@ -2314,8 +2687,8 @@ function SpectrumX:CreateStatusCard(parent, config)
     local barBg = Instance.new("Frame")
     barBg.Name = "BarBg"
     barBg.BackgroundColor3 = self.Theme.Input
-    barBg.Position = UDim2.new(0, 0, 1, -self:S(6))
-    barBg.Size = UDim2.new(1, 0, 0, self:S(5))
+    barBg.Position = UDim2.new(0, 0, 1, -self:S(5))
+    barBg.Size = UDim2.new(1, 0, 0, self:S(4))
     barBg.ClipsDescendants = true
     barBg.ZIndex = 13
     barBg.Parent = content
@@ -2364,8 +2737,256 @@ end
 
 
 
+-- ─── CREATE LABELTOGGLE ───────────────────────────────────────────────────────
+-- NOVO: Toggle com label inferior e ícone de dropdown customizável
+function SpectrumX:CreateLabelToggle(parent, config)
+    config = config or {}
+    local text = config.Text or "LabelToggle"
+    local labelText = config.Label or ""  -- Texto do label inferior
+    local default = config.Default or false
+    local callback = config.Callback or function() end
+    -- NOVO: Asset ID customizável para o ícone de dropdown
+    local arrowIconAssetId = config.ArrowIconAssetId or nil
+    local arrowOpenIconAssetId = config.ArrowOpenIconAssetId or arrowIconAssetId
+    -- NOVO: Callback quando clicar no label/ícone (para expandir algo)
+    local onExpand = config.OnExpand or nil
+    
+    -- Altura maior para acomodar o label inferior
+    local height = self:S(62)
+    
+    local frame = Instance.new("Frame")
+    frame.Name = "LabelToggle_" .. text
+    frame.BackgroundColor3 = self.Theme.Card
+    frame.Size = UDim2.new(1, 0, 0, height)
+    frame.ZIndex = 12
+    frame.Parent = parent
+    self:CreateCorner(frame)
+    self:CreateStroke(frame, self.Theme.Border, 1, 0.5)
+    
+    -- Efeito hover
+    local hoverFill = Instance.new("Frame")
+    hoverFill.Name = "HoverFill"
+    hoverFill.BackgroundColor3 = Color3.new(1, 1, 1)
+    hoverFill.BackgroundTransparency = 1
+    hoverFill.BorderSizePixel = 0
+    hoverFill.Size = UDim2.new(1, 0, 1, 0)
+    hoverFill.ZIndex = 0
+    hoverFill.Parent = frame
+    self:CreateCorner(hoverFill)
+    
+    -- Container do texto principal e linha
+    local textContainer = Instance.new("Frame")
+    textContainer.Name = "TextContainer"
+    textContainer.BackgroundTransparency = 1
+    textContainer.Position = UDim2.new(0, self:S(12), 0, 0)
+    textContainer.Size = UDim2.new(0.55, 0, 1, 0)
+    textContainer.ZIndex = 13
+    textContainer.Parent = frame
+    
+    -- Label principal
+    local mainLabel = Instance.new("TextLabel")
+    mainLabel.Name = "MainLabel"
+    mainLabel.BackgroundTransparency = 1
+    mainLabel.Position = UDim2.new(0, 0, 0, self:S(8))
+    mainLabel.Size = UDim2.new(1, 0, 0, self:S(16))
+    mainLabel.Font = Enum.Font.GothamSemibold
+    mainLabel.Text = text
+    mainLabel.TextColor3 = self.Theme.Text
+    mainLabel.TextSize = self:S(12)
+    mainLabel.TextXAlignment = Enum.TextXAlignment.Left
+    mainLabel.ZIndex = 14
+    mainLabel.Parent = textContainer
+    
+    -- Linha separadora
+    local separator = Instance.new("Frame")
+    separator.Name = "Separator"
+    separator.BackgroundColor3 = self.Theme.Border
+    separator.BorderSizePixel = 0
+    separator.Position = UDim2.new(0, 0, 0.5, 0)
+    separator.Size = UDim2.new(1, 0, 0, 1)
+    separator.ZIndex = 14
+    separator.Parent = textContainer
+    
+    -- Label inferior
+    local subLabel = Instance.new("TextLabel")
+    subLabel.Name = "SubLabel"
+    subLabel.BackgroundTransparency = 1
+    subLabel.Position = UDim2.new(0, 0, 0.55, 0)
+    subLabel.Size = UDim2.new(1, 0, 0, self:S(14))
+    subLabel.Font = Enum.Font.Gotham
+    subLabel.Text = labelText
+    subLabel.TextColor3 = self.Theme.TextMuted
+    subLabel.TextSize = self:S(10)
+    subLabel.TextXAlignment = Enum.TextXAlignment.Left
+    subLabel.ZIndex = 14
+    subLabel.Parent = textContainer
+    
+    -- Track do toggle
+    local trackWidth, trackHeight = self:S(42), self:S(22)
+    local track = Instance.new("TextButton")
+    track.Name = "Track"
+    track.AutoButtonColor = false
+    track.BackgroundColor3 = default and self.Theme.ToggleOn or self.Theme.ToggleOff
+    track.Position = UDim2.new(1, -trackWidth - self:S(12), 0.5, -trackHeight/2)
+    track.Size = UDim2.new(0, trackWidth, 0, trackHeight)
+    track.Text = ""
+    track.ZIndex = 14
+    track.Parent = frame
+    self:CreateCorner(track, UDim.new(1, 0))
+    self:CreateStroke(track, default and self.Theme.Accent or self.Theme.Border, 1, default and 0.2 or 0.5)
+    
+    local trackStroke = track:FindFirstChildOfClass("UIStroke")
+    
+    -- Knob
+    local knobSize = self:S(16)
+    local knob = Instance.new("Frame")
+    knob.Name = "Knob"
+    knob.BackgroundColor3 = Color3.new(1, 1, 1)
+    knob.Position = default and UDim2.new(1, -knobSize - self:S(3), 0.5, -knobSize/2)
+                             or UDim2.new(0, self:S(3), 0.5, -knobSize/2)
+    knob.Size = UDim2.new(0, knobSize, 0, knobSize)
+    knob.ZIndex = 15
+    knob.Parent = track
+    self:CreateCorner(knob, UDim.new(1, 0))
+    self:CreateStroke(knob, Color3.fromRGB(200, 200, 200), 1, 0.3)
+    
+    -- NOVO: Ícone de dropdown/expandir (opcional)
+    local expandBtn
+    if arrowIconAssetId and self:IsAssetId(arrowIconAssetId) then
+        -- Asset ID para ícone
+        expandBtn = Instance.new("ImageButton")
+        expandBtn.Name = "ExpandBtn"
+        expandBtn.BackgroundTransparency = 1
+        expandBtn.Position = UDim2.new(1, -trackWidth - self:S(40), 0.5, -self:S(10))
+        expandBtn.Size = UDim2.new(0, self:S(20), 0, self:S(20))
+        expandBtn.Image = self:FormatAssetId(arrowIconAssetId)
+        expandBtn.ImageColor3 = self.Theme.TextMuted
+        expandBtn.ScaleType = Enum.ScaleType.Fit
+        expandBtn.AutoButtonColor = false
+        expandBtn.ZIndex = 14
+        expandBtn.Parent = frame
+    elseif arrowIconAssetId then
+        -- Texto como fallback
+        expandBtn = Instance.new("TextButton")
+        expandBtn.Name = "ExpandBtn"
+        expandBtn.BackgroundTransparency = 1
+        expandBtn.Position = UDim2.new(1, -trackWidth - self:S(40), 0.5, -self:S(10))
+        expandBtn.Size = UDim2.new(0, self:S(20), 0, self:S(20))
+        expandBtn.Font = Enum.Font.GothamBold
+        expandBtn.Text = "▾"
+        expandBtn.TextColor3 = self.Theme.TextMuted
+        expandBtn.TextSize = self:S(14)
+        expandBtn.AutoButtonColor = false
+        expandBtn.ZIndex = 14
+        expandBtn.Parent = frame
+    end
+    
+    local state = default
+    local isExpanded = false
+    
+    local function update(newState, animated)
+        local time = animated == false and 0 or 0.2
+        state = newState
+        
+        if state then
+            self:Tween(track, {BackgroundColor3 = self.Theme.ToggleOn}, time)
+            if trackStroke then
+                self:Tween(trackStroke, {Color = self.Theme.Accent, Transparency = 0.2}, time)
+            end
+            self:Tween(knob, {
+                Position = UDim2.new(1, -knobSize - self:S(3), 0.5, -knobSize/2)
+            }, time, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        else
+            self:Tween(track, {BackgroundColor3 = self.Theme.ToggleOff}, time)
+            if trackStroke then
+                self:Tween(trackStroke, {Color = self.Theme.Border, Transparency = 0.5}, time)
+            end
+            self:Tween(knob, {
+                Position = UDim2.new(0, self:S(3), 0.5, -knobSize/2)
+            }, time, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        end
+    end
+    
+    -- Toggle click
+    track.MouseButton1Click:Connect(function()
+        state = not state
+        callback(state)
+        update(state)
+    end)
+    
+    -- NOVO: Expandir ao clicar no ícone
+    if expandBtn and onExpand then
+        expandBtn.MouseButton1Click:Connect(function()
+            isExpanded = not isExpanded
+            
+            -- Animar rotação do ícone
+            if expandBtn:IsA("ImageButton") and arrowOpenIconAssetId then
+                if isExpanded then
+                    expandBtn.Image = self:FormatAssetId(arrowOpenIconAssetId)
+                else
+                    expandBtn.Image = self:FormatAssetId(arrowIconAssetId)
+                end
+            else
+                self:Tween(expandBtn, {Rotation = isExpanded and 180 or 0}, 0.2)
+            end
+            
+            -- Chamar callback
+            onExpand(isExpanded)
+        end)
+        
+        expandBtn.MouseEnter:Connect(function()
+            if expandBtn:IsA("ImageButton") then
+                self:Tween(expandBtn, {ImageColor3 = self.Theme.Accent}, 0.15)
+            else
+                self:Tween(expandBtn, {TextColor3 = self.Theme.Accent}, 0.15)
+            end
+        end)
+        
+        expandBtn.MouseLeave:Connect(function()
+            if expandBtn:IsA("ImageButton") then
+                self:Tween(expandBtn, {ImageColor3 = self.Theme.TextMuted}, 0.15)
+            else
+                self:Tween(expandBtn, {TextColor3 = self.Theme.TextMuted}, 0.15)
+            end
+        end)
+    end
+    
+    -- Hover
+    frame.MouseEnter:Connect(function()
+        self:Tween(hoverFill, {BackgroundTransparency = 0.97}, 0.15)
+    end)
+    
+    frame.MouseLeave:Connect(function()
+        self:Tween(hoverFill, {BackgroundTransparency = 1}, 0.15)
+    end)
+    
+    return {
+        Frame = frame,
+        GetState = function() return state end,
+        SetState = function(s) state = s; callback(state); update(state) end,
+        SetLabel = function(l) subLabel.Text = l end,
+        GetIsExpanded = function() return isExpanded end,
+        SetExpanded = function(e)
+            isExpanded = e
+            if expandBtn then
+                if expandBtn:IsA("ImageButton") and arrowOpenIconAssetId then
+                    if isExpanded then
+                        expandBtn.Image = self:FormatAssetId(arrowOpenIconAssetId)
+                    else
+                        expandBtn.Image = self:FormatAssetId(arrowIconAssetId)
+                    end
+                else
+                    expandBtn.Rotation = isExpanded and 180 or 0
+                end
+            end
+        end,
+    }
+end
+
+
+
 -- ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
--- CORREÇÃO: Notificações sem bugs de sobreposição e com visual profissional
+-- CORREÇÃO: Barra de progresso corrigida - sem borda estranha no lado esquerdo
 function SpectrumX:Notify(config)
     config = config or {}
     local text = config.Text or "Notificação"
@@ -2397,7 +3018,7 @@ function SpectrumX:Notify(config)
     notif.ClipsDescendants = false
     notif.Parent = self.ScreenGui
 
-    -- Card interno: tem background e stroke neutro, sem progresso dentro
+    -- Card interno: tem background e stroke neutro
     local card = Instance.new("Frame")
     card.Name = "Card"
     card.BackgroundColor3 = self.Theme.Card
@@ -2409,13 +3030,15 @@ function SpectrumX:Notify(config)
     self:CreateCorner(card, UDim.new(0, 10))
     self:CreateStroke(card, self.Theme.Border, 1, 0.5)
 
-    -- Barra lateral colorida (dentro do card)
+    -- CORREÇÃO: Barra lateral colorida - posicionada corretamente dentro do card
+    -- sem ultrapassar as bordas
     local colorBar = Instance.new("Frame")
     colorBar.Name = "ColorBar"
     colorBar.BackgroundColor3 = color
     colorBar.BorderSizePixel = 0
+    -- CORREÇÃO: Posição ajustada para não ficar na borda
     colorBar.Size = UDim2.new(0, 4, 1, -self:S(16))
-    colorBar.Position = UDim2.new(0, 0, 0, self:S(8))
+    colorBar.Position = UDim2.new(0, self:S(8), 0, self:S(8))
     colorBar.ZIndex = 2002
     colorBar.Parent = card
     self:CreateCorner(colorBar, UDim.new(1, 0))
@@ -2428,7 +3051,7 @@ function SpectrumX:Notify(config)
     local icon = Instance.new("TextLabel")
     icon.Name = "Icon"
     icon.BackgroundTransparency = 1
-    icon.Position = UDim2.new(0, self:S(16), 0, 0)
+    icon.Position = UDim2.new(0, self:S(20), 0, 0)
     icon.Size = UDim2.new(0, self:S(28), 1, 0)
     icon.Font = Enum.Font.GothamBlack
     icon.Text = iconText
@@ -2441,8 +3064,8 @@ function SpectrumX:Notify(config)
     local textContainer = Instance.new("Frame")
     textContainer.Name = "TextContainer"
     textContainer.BackgroundTransparency = 1
-    textContainer.Position = UDim2.new(0, self:S(50), 0, self:S(8))
-    textContainer.Size = UDim2.new(1, -self:S(65), 1, -self:S(16))
+    textContainer.Position = UDim2.new(0, self:S(54), 0, self:S(8))
+    textContainer.Size = UDim2.new(1, -self:S(70), 1, -self:S(16))
     textContainer.ZIndex = 2002
     textContainer.Parent = card
 
@@ -2460,17 +3083,19 @@ function SpectrumX:Notify(config)
     textLabel.ZIndex = 2003
     textLabel.Parent = textContainer
 
-    -- Barra de progresso: FORA do card, no wrapper — não interfere no stroke
+    -- CORREÇÃO: Barra de progresso - dentro do card, na parte inferior
+    -- sem transbordar para fora
     local progBg = Instance.new("Frame")
     progBg.Name = "ProgressBg"
     progBg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     progBg.BorderSizePixel = 0
-    progBg.AnchorPoint = Vector2.new(0, 1)
-    progBg.Position = UDim2.new(0, self:S(6), 1, 0)
-    progBg.Size = UDim2.new(1, -self:S(12), 0, self:S(3))
+    progBg.AnchorPoint = Vector2.new(0.5, 1)
+    -- CORREÇÃO: Posicionada dentro do card com margens adequadas
+    progBg.Position = UDim2.new(0.5, 0, 1, -self:S(6))
+    progBg.Size = UDim2.new(1, -self:S(16), 0, self:S(3))
     progBg.ClipsDescendants = true
     progBg.ZIndex = 2001
-    progBg.Parent = notif
+    progBg.Parent = card
     self:CreateCorner(progBg, UDim.new(1, 0))
 
     local progBar = Instance.new("Frame")
@@ -2480,6 +3105,7 @@ function SpectrumX:Notify(config)
     progBar.BorderSizePixel = 0
     progBar.ZIndex = 2002
     progBar.Parent = progBg
+    self:CreateCorner(progBar, UDim.new(1, 0))
 
     -- Botão de fechar invisível (clique na notificação)
     local closeBtn = Instance.new("TextButton")
@@ -2625,6 +3251,23 @@ function SpectrumX:SetTheme(newTheme)
             self.Theme[key] = value
         end
     end
+end
+
+-- ─── ADD LUCIDE ICON ──────────────────────────────────────────────────────────
+-- NOVO: Adicionar ícone Lucide personalizado
+function SpectrumX:AddLucideIcon(name, iconChar)
+    self.LucideIcons[name:lower()] = iconChar
+end
+
+-- ─── GET LUCIDE ICONS LIST ────────────────────────────────────────────────────
+-- NOVO: Obter lista de ícones Lucide disponíveis
+function SpectrumX:GetLucideIconsList()
+    local list = {}
+    for name, _ in pairs(self.LucideIcons) do
+        table.insert(list, name)
+    end
+    table.sort(list)
+    return list
 end
 
 -- Retornar a biblioteca
