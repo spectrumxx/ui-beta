@@ -150,7 +150,6 @@ function SpectrumX:CreateWindow(config)
     local window = setmetatable({}, self)
     self:UpdateScale()
 
-    -- Limpa instâncias anteriores tanto no PlayerGui quanto no CoreGui
     if PlayerGui:FindFirstChild("SpectrumX") then
         PlayerGui.SpectrumX:Destroy()
     end
@@ -166,14 +165,9 @@ function SpectrumX:CreateWindow(config)
     self.ScreenGui.IgnoreGuiInset = true
     self.ScreenGui.DisplayOrder = 999999
 
-    -- CoreGui ignora o DisplayOrder da Roblox e fica ACIMA de qualquer GUI nativa
-    local ok = pcall(function()
-        self.ScreenGui.Parent = coreGui
-    end)
-    if not ok then
-        -- Fallback para PlayerGui se não tiver permissão (ex: Studio)
-        self.ScreenGui.Parent = PlayerGui
-    end
+    -- CoreGui fica acima da TopBar, chat e qualquer GUI nativa do Roblox
+    local okCG = pcall(function() self.ScreenGui.Parent = coreGui end)
+    if not okCG then self.ScreenGui.Parent = PlayerGui end
 
     self._notifications = {}; self.Dropdowns = {}; self._drops = {}
 
@@ -1579,9 +1573,8 @@ function SpectrumX:Notify(config)
     local duration = config.Duration or 3
 
     self:UpdateScale()
-    -- Tamanho mais compacto e elegante
-    local nW = self:S(ScaleData.IsMobile and 240 or 272)
-    local nH = self:S(ScaleData.IsMobile and 52 or 56)
+    local nW = self:S(ScaleData.IsMobile and 250 or 290)
+    local nH = self:S(ScaleData.IsMobile and 54 or 60)
 
     local color = self.Theme.Info
     if ntype == "success" then     color = self.Theme.Success
@@ -1589,79 +1582,72 @@ function SpectrumX:Notify(config)
     elseif ntype == "error" then   color = self.Theme.Error
     end
 
-    -- Container pai invisível para isolar o stroke da barra de progresso
+    -- Wrapper transparente: posicionado/animado, não tem visual próprio
     local notif = Instance.new("Frame")
     notif.BackgroundTransparency = 1
     notif.BorderSizePixel = 0
     notif.Size = UDim2.new(0, nW, 0, nH)
     notif.ZIndex = 1000
-    notif.Parent = self.ScreenGui
     notif.ClipsDescendants = false
+    notif.Parent = self.ScreenGui
 
-    -- Card interno (recebe o stroke e o corner — sem ClipsDescendants)
+    -- Card interno: tem background, corner e stroke — SEM barra de progresso dentro
     local card = Instance.new("Frame")
     card.BackgroundColor3 = self.Theme.Card
     card.BorderSizePixel = 0
-    card.Size = UDim2.new(1, 0, 1, -self:S(3))  -- deixa 3px pra barra de progresso abaixo
+    card.Size = UDim2.new(1, 0, 1, 0)
     card.ZIndex = 1000
     card.ClipsDescendants = false
     card.Parent = notif
-    self:CreateCorner(card, UDim.new(0, 8))
+    self:CreateCorner(card, UDim.new(0,10))
     self:CreateStroke(card, self.Theme.Border, 1, 0.3)
 
-    -- Sombra
-    local shadow = Instance.new("Frame")
-    shadow.Name = "Shadow"
-    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    shadow.BackgroundColor3 = Color3.new(0, 0, 0)
-    shadow.BackgroundTransparency = 0.65
-    shadow.BorderSizePixel = 0
-    shadow.Position = UDim2.new(0.5, 0, 0.5, 3)
-    shadow.Size = UDim2.new(1, 14, 1, 14)
-    shadow.ZIndex = 999
-    shadow.Parent = card
-    self:CreateCorner(shadow, UDim.new(0, 10))
-
-    -- Barra colorida esquerda
+    -- Barra colorida esquerda (dentro do card)
     local colorBar = Instance.new("Frame")
     colorBar.BackgroundColor3 = color; colorBar.BorderSizePixel = 0
-    colorBar.Size = UDim2.new(0, 3, 1, -self:S(12))
-    colorBar.Position = UDim2.new(0, 0, 0, self:S(6))
-    colorBar.ZIndex = 1001
+    colorBar.Size = UDim2.new(0, 3, 1, -self:S(16))
+    colorBar.Position = UDim2.new(0, 0, 0, self:S(8))
+    colorBar.ZIndex = 1002
     colorBar.Parent = card; self:CreateCorner(colorBar, UDim.new(1,0))
 
+    -- Barra topo colorida (dentro do card)
+    local topBar = Instance.new("Frame")
+    topBar.BackgroundColor3 = color; topBar.BorderSizePixel = 0
+    topBar.Size = UDim2.new(0.4, 0, 0, 2); topBar.Position = UDim2.new(0, 0, 0, 0)
+    topBar.ZIndex = 1002
+    topBar.Parent = card; self:CreateCorner(topBar, UDim.new(1,0))
+
     local icon = Instance.new("TextLabel"); icon.BackgroundTransparency = 1
-    icon.Position = UDim2.new(0, self:S(12), 0, 0); icon.Size = UDim2.new(0, self:S(22), 1, 0)
+    icon.Position = UDim2.new(0, self:S(14), 0, 0); icon.Size = UDim2.new(0, self:S(26), 1, 0)
     icon.Font = Enum.Font.GothamBlack
     icon.Text = ntype=="success" and "✓" or ntype=="warning" and "⚠" or ntype=="error" and "✕" or "ℹ"
-    icon.TextColor3 = color; icon.TextSize = self:S(15)
-    icon.ZIndex = 1001
+    icon.TextColor3 = color; icon.TextSize = self:S(18)
+    icon.ZIndex = 1002
     icon.Parent = card
 
     local lbl = Instance.new("TextLabel"); lbl.BackgroundTransparency = 1
-    lbl.Position = UDim2.new(0, self:S(40), 0, 0)
-    lbl.Size = UDim2.new(1, -self:S(48), 1, 0)
+    lbl.Position = UDim2.new(0, self:S(46), 0, 0)
+    lbl.Size = UDim2.new(1, -self:S(58), 1, 0)
     lbl.Font = Enum.Font.GothamSemibold; lbl.Text = text
-    lbl.TextColor3 = self.Theme.Text; lbl.TextSize = self:S(11)
+    lbl.TextColor3 = self.Theme.Text; lbl.TextSize = self:S(12)
     lbl.TextWrapped = true
-    lbl.ZIndex = 1001
+    lbl.ZIndex = 1002
     lbl.Parent = card
 
-    -- Barra de progresso: fica FORA do card, no container pai, sem afetar o stroke
+    -- Barra de progresso: FORA do card, no wrapper — não interfere no stroke
     local progBg = Instance.new("Frame")
     progBg.BackgroundColor3 = Color3.fromRGB(20,20,20); progBg.BorderSizePixel = 0
     progBg.AnchorPoint = Vector2.new(0, 1)
-    progBg.Position = UDim2.new(0, self:S(8), 1, 0)   -- 8px de margem nas laterais
-    progBg.Size = UDim2.new(1, -self:S(16), 0, self:S(3))
+    progBg.Position = UDim2.new(0, self:S(6), 1, 0)
+    progBg.Size = UDim2.new(1, -self:S(12), 0, self:S(3))
     progBg.ClipsDescendants = true
-    progBg.ZIndex = 1002
+    progBg.ZIndex = 1001
     progBg.Parent = notif
     self:CreateCorner(progBg, UDim.new(1,0))
-
     local prog = Instance.new("Frame")
     prog.BackgroundColor3 = color; prog.Size = UDim2.new(1,0,1,0)
     prog.BorderSizePixel = 0
-    prog.ZIndex = 1003
+    prog.ZIndex = 1002
     prog.Parent = progBg
 
     -- Click para fechar
@@ -1695,7 +1681,7 @@ function SpectrumX:Notify(config)
         end
         local vp = getVP()
         self:Tween(notif, {Position = UDim2.fromOffset(vp.X + nW + 20, notif.AbsolutePosition.Y)}, 0.3)
-        self:Tween(card, {BackgroundTransparency = 1}, 0.3)
+        self:Tween(card, {BackgroundTransparency = 1}, 0.25)
         restack(); task.wait(0.35)
         if notif and notif.Parent then notif:Destroy() end
     end
