@@ -6,25 +6,6 @@
     ║  Estrutura modular baseada em Fluent UI (dawid-scripts)                 ║
     ║  Mantendo características únicas do SpectrumX original                  ║
     ╚══════════════════════════════════════════════════════════════════════════╝
-
-    Uso:
-        local Library = loadstring(game:HttpGet("URL"))()
-
-        local Window = Library:CreateWindow({
-            Title = "Meu Script",
-            Size = UDim2.fromOffset(550, 600),
-            Theme = "Dark",
-            FloatingButton = {
-                Enabled = true,
-                Icon = "settings",
-                Position = "BottomRight"
-            }
-        })
-
-        local Tab = Window:AddTab({ Title = "Main", Icon = "home" })
-        local Section = Tab:AddSection("Farm")
-
-        Section:AddToggle({ Title = "Auto Farm", Default = false, Callback = function(v) end })
 --]]
 
 local SpectrumX = {}
@@ -54,32 +35,9 @@ end
 -- ─── MÓDULOS ──────────────────────────────────────────────────────────────────
 local Themes = Load("Themes/init.lua")
 local Icons = Load("Icons.lua")
-
-local Utils = {
-    Tween = Load("Utils/Tween.lua"),
-    Event = Load("Utils/Event.lua"),
-    Responsive = Load("Utils/Responsive.lua")
-}
-
-local Elements = {
-    Acrylic = Load("Elements/Acrylic.lua"),
-    TitleBar = Load("Elements/TitleBar.lua"),
-    Notification = Load("Elements/Notification.lua"),
-    FloatingButton = Load("Elements/FloatingButton.lua")
-}
-
-local Components = {
-    Window = Load("Components/Window.lua"),
-    Tab = Load("Components/Tab.lua"),
-    Section = Load("Components/Section.lua"),
-    Button = Load("Components/Button.lua"),
-    Toggle = Load("Components/Toggle.lua"),
-    Slider = Load("Components/Slider.lua"),
-    Dropdown = Load("Components/Dropdown.lua"),
-    Input = Load("Components/Input.lua"),
-    Label = Load("Components/Label.lua"),
-    Container = Load("Components/Container.lua")
-}
+local Utils = Load("Utils/init.lua")
+local Elements = Load("Elements/init.lua")
+local Components = Load("Components/init.lua")
 
 -- ─── CONFIGURAÇÕES GLOBAIS ────────────────────────────────────────────────────
 SpectrumX.Version = "3.0.0"
@@ -160,7 +118,6 @@ function SpectrumX:CreateWindow(config)
         return self.Window
     end
 
-    -- Configurações padrão
     config.Title = config.Title or "SpectrumX"
     config.SubTitle = config.SubTitle or nil
     config.Size = config.Size or UDim2.fromOffset(550, 600)
@@ -170,12 +127,10 @@ function SpectrumX:CreateWindow(config)
     config.MinimizeKey = config.MinimizeKey or Enum.KeyCode.RightControl
     config.FloatingButton = config.FloatingButton or { Enabled = true }
 
-    -- Definir tema
     self:SetTheme(config.Theme)
     self.UseAcrylic = config.Acrylic
     self.MinimizeKey = config.MinimizeKey
 
-    -- Criar ScreenGui
     local protectGui = (getgenv and getgenv().protectgui)
         or (syn and syn.protect_gui)
         or function() end
@@ -196,24 +151,20 @@ function SpectrumX:CreateWindow(config)
 
     protectGui(self.ScreenGui)
 
-    -- Inicializar sistema de notificações
     if Elements.Notification and Elements.Notification.Init then
         Elements.Notification:Init(self.ScreenGui)
     end
 
-    -- Inicializar responsividade
     if Utils.Responsive and Utils.Responsive.Init then
         Utils.Responsive:Init()
     end
 
-    -- Criar janela principal
     if not (Components.Window and Components.Window.New) then
         error("[SpectrumX] Components.Window:New não encontrado.")
     end
 
     self.Window = Components.Window:New(config, self.ScreenGui)
 
-    -- Criar botão flutuante se habilitado
     if config.FloatingButton.Enabled and Elements.FloatingButton and Elements.FloatingButton.New then
         Elements.FloatingButton:New({
             Icon = config.FloatingButton.Icon or "menu",
@@ -254,5 +205,4 @@ function SpectrumX:ToggleAcrylic(enabled)
     end
 end
 
--- ─── EXPORTAR ─────────────────────────────────────────────────────────────────
 return SpectrumX
