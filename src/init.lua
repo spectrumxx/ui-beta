@@ -52,7 +52,7 @@ local function Load(path)
 end
 
 -- ─── MÓDULOS ──────────────────────────────────────────────────────────────────
-local Themes = Load("Themes/Init.lua")
+local Themes = Load("Themes/init.lua")
 local Icons = Load("Icons.lua")
 
 local Utils = {
