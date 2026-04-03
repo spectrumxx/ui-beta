@@ -1,15 +1,15 @@
 --[[
     ╔══════════════════════════════════════════════════════════════════════════╗
     ║                    SpectrumX UI Library v3.0 - Modular                   ║
-    ║              Professional UI Library for Roblox Executores               ║
+    ║              Professional UI Library for Roblox Executors                ║
     ║                                                                          ║
     ║  Estrutura modular baseada em Fluent UI (dawid-scripts)                 ║
     ║  Mantendo características únicas do SpectrumX original                  ║
     ╚══════════════════════════════════════════════════════════════════════════╝
-    
+
     Uso:
         local Library = loadstring(game:HttpGet("URL"))()
-        
+
         local Window = Library:CreateWindow({
             Title = "Meu Script",
             Size = UDim2.fromOffset(550, 600),
@@ -20,10 +20,10 @@
                 Position = "BottomRight"
             }
         })
-        
+
         local Tab = Window:AddTab({ Title = "Main", Icon = "home" })
         local Section = Tab:AddSection("Farm")
-        
+
         Section:AddToggle({ Title = "Auto Farm", Default = false, Callback = function(v) end })
 --]]
 
@@ -32,41 +32,53 @@ SpectrumX.__index = SpectrumX
 
 -- ─── SERVIÇOS ─────────────────────────────────────────────────────────────────
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 
+-- ─── BASE DO REPOSITÓRIO ──────────────────────────────────────────────────────
+local BASE = "https://raw.githubusercontent.com/spectrumxx/ui-beta/main/src/"
+
+local function Load(path)
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(BASE .. path))()
+    end)
+
+    if not success then
+        error("[SpectrumX] Falha ao carregar módulo: " .. tostring(path) .. "\nErro: " .. tostring(result))
+    end
+
+    return result
+end
+
 -- ─── MÓDULOS ──────────────────────────────────────────────────────────────────
-local Themes = require(script.Themes)
+local Themes = Load("Themes/Init.lua")
+local Icons = Load("Icons.lua")
+
 local Utils = {
-    Tween = require(script.Utils.Tween),
-    Event = require(script.Utils.Event),
-    Responsive = require(script.Utils.Responsive)
+    Tween = Load("Utils/Tween.lua"),
+    Event = Load("Utils/Event.lua"),
+    Responsive = Load("Utils/Responsive.lua")
 }
 
--- ─── ELEMENTOS ────────────────────────────────────────────────────────────────
 local Elements = {
-    Acrylic = require(script.Elements.Acrylic),
-    TitleBar = require(script.Elements.TitleBar),
-    Notification = require(script.Elements.Notification),
-    FloatingButton = require(script.Elements.FloatingButton)
+    Acrylic = Load("Elements/Acrylic.lua"),
+    TitleBar = Load("Elements/TitleBar.lua"),
+    Notification = Load("Elements/Notification.lua"),
+    FloatingButton = Load("Elements/FloatingButton.lua")
 }
 
--- ─── COMPONENTES ──────────────────────────────────────────────────────────────
 local Components = {
-    Window = require(script.Components.Window),
-    Tab = require(script.Components.Tab),
-    Section = require(script.Components.Section),
-    Button = require(script.Components.Button),
-    Toggle = require(script.Components.Toggle),
-    Slider = require(script.Components.Slider),
-    Dropdown = require(script.Components.Dropdown),
-    Input = require(script.Components.Input),
-    Label = require(script.Components.Label),
-    Container = require(script.Components.Container)
+    Window = Load("Components/Window.lua"),
+    Tab = Load("Components/Tab.lua"),
+    Section = Load("Components/Section.lua"),
+    Button = Load("Components/Button.lua"),
+    Toggle = Load("Components/Toggle.lua"),
+    Slider = Load("Components/Slider.lua"),
+    Dropdown = Load("Components/Dropdown.lua"),
+    Input = Load("Components/Input.lua"),
+    Label = Load("Components/Label.lua"),
+    Container = Load("Components/Container.lua")
 }
 
 -- ─── CONFIGURAÇÕES GLOBAIS ────────────────────────────────────────────────────
@@ -77,10 +89,20 @@ SpectrumX.ScreenGui = nil
 SpectrumX.UseAcrylic = false
 SpectrumX.MinimizeKey = Enum.KeyCode.RightControl
 
+SpectrumX.Themes = Themes
+SpectrumX.Icons = Icons
+SpectrumX.Utils = Utils
+SpectrumX.Elements = Elements
+SpectrumX.Components = Components
+
 -- ─── UTILITÁRIOS ──────────────────────────────────────────────────────────────
 function SpectrumX:SafeCallback(callback, ...)
-    if not callback then return end
+    if not callback then
+        return
+    end
+
     local success, result = pcall(callback, ...)
+
     if not success then
         self:Notify({
             Title = "Erro de Callback",
@@ -88,11 +110,11 @@ function SpectrumX:SafeCallback(callback, ...)
             Duration = 5
         })
     end
+
     return success, result
 end
 
 function SpectrumX:GetIcon(name)
-    local Icons = require(script.Icons)
     return Icons[name] or Icons["menu"]
 end
 
@@ -100,28 +122,44 @@ end
 function SpectrumX:SetTheme(themeName)
     if Themes[themeName] then
         self.Theme = themeName
-        Utils.Event.Trigger("ThemeChanged", themeName)
+
+        if Utils.Event and Utils.Event.Trigger then
+            Utils.Event.Trigger("ThemeChanged", themeName)
+        end
+
+        return true
     end
+
+    warn("[SpectrumX] Tema não encontrado: " .. tostring(themeName))
+    return false
 end
 
 function SpectrumX:GetTheme()
     return Themes[self.Theme] or Themes.Dark
 end
 
+function SpectrumX:GetThemes()
+    return Themes.Names or { "Dark" }
+end
+
 -- ─── NOTIFICAÇÃO ──────────────────────────────────────────────────────────────
 function SpectrumX:Notify(config)
-    return Elements.Notification:New(config)
+    if Elements.Notification and Elements.Notification.New then
+        return Elements.Notification:New(config)
+    end
+
+    warn("[SpectrumX] Sistema de notificações não disponível.")
 end
 
 -- ─── CRIAR JANELA ─────────────────────────────────────────────────────────────
 function SpectrumX:CreateWindow(config)
     config = config or {}
-    
+
     if self.Window then
         warn("[SpectrumX] Apenas uma janela pode ser criada por vez!")
         return self.Window
     end
-    
+
     -- Configurações padrão
     config.Title = config.Title or "SpectrumX"
     config.SubTitle = config.SubTitle or nil
@@ -131,41 +169,52 @@ function SpectrumX:CreateWindow(config)
     config.Acrylic = config.Acrylic or false
     config.MinimizeKey = config.MinimizeKey or Enum.KeyCode.RightControl
     config.FloatingButton = config.FloatingButton or { Enabled = true }
-    
+
     -- Definir tema
     self:SetTheme(config.Theme)
     self.UseAcrylic = config.Acrylic
     self.MinimizeKey = config.MinimizeKey
-    
+
     -- Criar ScreenGui
-    local protectGui = getgenv().protectgui or (syn and syn.protect_gui) or function() end
-    
+    local protectGui = (getgenv and getgenv().protectgui)
+        or (syn and syn.protect_gui)
+        or function() end
+
     self.ScreenGui = Instance.new("ScreenGui")
     self.ScreenGui.Name = "SpectrumX_" .. tostring(math.random(1000, 9999))
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.ScreenGui.IgnoreGuiInset = true
-    
+
     local success = pcall(function()
         self.ScreenGui.Parent = CoreGui
     end)
+
     if not success then
         self.ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     end
-    
+
     protectGui(self.ScreenGui)
-    
+
     -- Inicializar sistema de notificações
-    Elements.Notification:Init(self.ScreenGui)
-    
+    if Elements.Notification and Elements.Notification.Init then
+        Elements.Notification:Init(self.ScreenGui)
+    end
+
     -- Inicializar responsividade
-    Utils.Responsive:Init()
-    
+    if Utils.Responsive and Utils.Responsive.Init then
+        Utils.Responsive:Init()
+    end
+
     -- Criar janela principal
+    if not (Components.Window and Components.Window.New) then
+        error("[SpectrumX] Components.Window:New não encontrado.")
+    end
+
     self.Window = Components.Window:New(config, self.ScreenGui)
-    
+
     -- Criar botão flutuante se habilitado
-    if config.FloatingButton.Enabled then
+    if config.FloatingButton.Enabled and Elements.FloatingButton and Elements.FloatingButton.New then
         Elements.FloatingButton:New({
             Icon = config.FloatingButton.Icon or "menu",
             Position = config.FloatingButton.Position or "BottomRight",
@@ -173,26 +222,34 @@ function SpectrumX:CreateWindow(config)
             Window = self.Window
         }, self.ScreenGui)
     end
-    
+
     return self.Window
 end
 
 -- ─── DESTRUIR ─────────────────────────────────────────────────────────────────
 function SpectrumX:Destroy()
-    if self.Window then
-        self.Window:Destroy()
+    if self.Window and self.Window.Destroy then
+        pcall(function()
+            self.Window:Destroy()
+        end)
         self.Window = nil
     end
+
     if self.ScreenGui then
-        self.ScreenGui:Destroy()
+        pcall(function()
+            self.ScreenGui:Destroy()
+        end)
         self.ScreenGui = nil
     end
-    Utils.Event.DisconnectAll()
+
+    if Utils.Event and Utils.Event.DisconnectAll then
+        Utils.Event.DisconnectAll()
+    end
 end
 
 -- ─── TOGGLE ACRYLIC ───────────────────────────────────────────────────────────
 function SpectrumX:ToggleAcrylic(enabled)
-    if self.UseAcrylic and self.Window then
+    if self.Window and Elements.Acrylic and Elements.Acrylic.Toggle then
         Elements.Acrylic:Toggle(enabled)
     end
 end
